@@ -222,11 +222,9 @@ export const useAssets = () => {
             ? api.tx.balances.transfer(receiver, amount)
             : api.tx.assets.transfer(sendToken.asAsset, receiver, amount);
 
-          const assetId = feeToken.isAsset ? feeToken.asAsset.toPrimitive() : undefined;
-          console.log({ assetId });
           const unsub = await transferMethod.signAndSend(
             activeAccount.address,
-            { assetId, signer: activeWallet.signer },
+            { signer: activeWallet.signer, assetId: feeToken.isAsset ? feeToken.asAsset : undefined },
             ({ events, status }) => {
               if (status.isReady) {
                 setStatus({ type: ModalStatusTypes.IN_PROGRESS, message: StatusMessages.SUBMITTING_TRANSACTION });
@@ -235,10 +233,6 @@ export const useAssets = () => {
               if (status.isInBlock) {
                 unsub();
 
-                events.forEach(({ event: { data, method, section }, phase }) => {
-                  console.log('\t', phase.toString(), `: ${section}.${method}`, data.toString());
-                });
-                console.log('-----');
                 events.some(({ event: { data, method, section } }) => {
                   if (sendToken.isAsset && `${section}.${method}` === 'assets.Transferred') {
                     setStatus({ type: ModalStatusTypes.COMPLETE, message: StatusMessages.TRANSFER_EXECUTED });
@@ -267,7 +261,7 @@ export const useAssets = () => {
         }
       }
     },
-    [api, activeAccount, activeWallet, openModalStatus, setStatus],
+    [api, activeAccount, activeWallet, navigate, openModalStatus, setStatus, setAction],
   );
 
   const fetchAllTokensMetadata = useCallback(async (): Promise<TokenMetadata[]> => {

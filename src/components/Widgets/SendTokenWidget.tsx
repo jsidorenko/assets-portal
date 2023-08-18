@@ -127,7 +127,6 @@ const SendTokenWidget = ({ sendToken, feeTokens }: SendAssetWidgetProps) => {
   if (!api || !activeAccount) {
     return null;
   }
-  // console.log(api.registry.signedExtensions);
 
   return (
     <>
