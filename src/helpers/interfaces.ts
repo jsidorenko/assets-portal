@@ -149,6 +149,10 @@ export interface TokenWithSupply extends TokenMetadata {
   supply: BN | null;
 }
 
+export interface TokenWithBalance extends TokenMetadata {
+  balance: BN | null;
+}
+
 export interface PalletAssetConversionPoolInfo extends Struct {
   readonly lpToken: AssetId;
 }

@@ -21,6 +21,7 @@ export const routes = {
 
     pools: '/my-assets/pools',
     createPool: '/my-assets/pools/create',
+    sendAsset: '/my-assets/send',
   },
 
   discover: {

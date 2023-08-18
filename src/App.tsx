@@ -24,6 +24,7 @@ import MintNftIndex from '@pages/MyAssets/MintNft/MintNftIndex';
 import MyAssets from '@pages/MyAssets/MyAssets';
 import CreatePool from '@pages/MyAssets/Pools/CreatePool';
 import MyPools from '@pages/MyAssets/Pools/MyPools';
+import SendAsset from '@pages/MyAssets/SendAsset';
 import CollectionEdit from '@pages/Nfts/Collections/CollectionEdit';
 import Collections from '@pages/Nfts/Collections/Collections';
 import NftEdit from '@pages/Nfts/Nfts/NftEdit';
@@ -196,6 +197,18 @@ const App = () => (
               }
             />
           </Route>
+
+          <Route
+            path={routes.myAssets.sendAsset}
+            index
+            element={
+              <>
+                <PrivateRoute>
+                  <SendAsset />
+                </PrivateRoute>
+              </>
+            }
+          />
         </Route>
 
         <Route path={routes.discover.index} element={<Discover />}>

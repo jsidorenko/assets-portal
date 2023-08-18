@@ -26,6 +26,7 @@ import type {
   PoolInfo,
   PoolReserves,
   TokenMetadata,
+  TokenWithBalance,
   TokensDetailsMap,
   TokensDetailsRecords,
   TokensMetadataRecords,
@@ -189,6 +190,65 @@ export const useAssets = () => {
                 events.some(({ event: { data, method } }) => {
                   if (method === 'SwapExecuted') {
                     setStatus({ type: ModalStatusTypes.COMPLETE, message: StatusMessages.SWAP_EXECUTED });
+                    return true;
+                  }
+
+                  if (method === 'ExtrinsicFailed') {
+                    setStatus({ type: ModalStatusTypes.ERROR, message: StatusMessages.ACTION_FAILED });
+                    return true;
+                  }
+
+                  return false;
+                });
+              }
+            },
+          );
+        } catch (error) {
+          setStatus({ type: ModalStatusTypes.ERROR, message: handleError(error) });
+        }
+      }
+    },
+    [api, activeAccount, activeWallet, openModalStatus, setStatus],
+  );
+
+  const doSendToken = useCallback(
+    async (sendToken: MultiAssetId, amount: BN, receiver: string, feeToken: MultiAssetId) => {
+      if (api && activeAccount && activeWallet) {
+        setStatus({ type: ModalStatusTypes.INIT_TRANSACTION, message: StatusMessages.TRANSACTION_CONFIRM });
+        openModalStatus();
+
+        try {
+          const transferMethod = sendToken.isNative
+            ? api.tx.balances.transfer(receiver, amount)
+            : api.tx.assets.transfer(sendToken.asAsset, receiver, amount);
+
+          const assetId = feeToken.isAsset ? feeToken.asAsset.toPrimitive() : undefined;
+          console.log({ assetId });
+          const unsub = await transferMethod.signAndSend(
+            activeAccount.address,
+            { assetId, signer: activeWallet.signer },
+            ({ events, status }) => {
+              if (status.isReady) {
+                setStatus({ type: ModalStatusTypes.IN_PROGRESS, message: StatusMessages.SUBMITTING_TRANSACTION });
+              }
+
+              if (status.isInBlock) {
+                unsub();
+
+                events.forEach(({ event: { data, method, section }, phase }) => {
+                  console.log('\t', phase.toString(), `: ${section}.${method}`, data.toString());
+                });
+                console.log('-----');
+                events.some(({ event: { data, method, section } }) => {
+                  if (sendToken.isAsset && `${section}.${method}` === 'assets.Transferred') {
+                    setStatus({ type: ModalStatusTypes.COMPLETE, message: StatusMessages.TRANSFER_EXECUTED });
+                    setAction(() => () => navigate(routes.myAssets.sendAsset));
+                    return true;
+                  }
+
+                  if (sendToken.isNative && `${section}.${method}` === 'balances.Transfer') {
+                    setStatus({ type: ModalStatusTypes.COMPLETE, message: StatusMessages.TRANSFER_EXECUTED });
+                    setAction(() => () => navigate(routes.myAssets.sendAsset));
                     return true;
                   }
 
@@ -472,6 +532,39 @@ export const useAssets = () => {
     }
   }, [api, getPoolReserves]);
 
+  const getAllTokensWithNativeAndBalances = useCallback(async (): Promise<TokenWithBalance[] | undefined> => {
+    if (!api || !storedChain || !activeAccount) return;
+
+    const result: TokenWithBalance[] = [];
+
+    try {
+      result.push({
+        ...formatNativeTokenMetadata(api, storedChain),
+        balance:
+          (await api.query.system.account(activeAccount.address).then(({ data: balance }) => balance.free.toBn())) ??
+          null,
+      });
+
+      const metadata: TokenMetadata[] = await fetchAllTokensMetadata();
+
+      if (metadata) {
+        for (const token of metadata) {
+          result.push({
+            ...token,
+            balance:
+              (await api.query.assets
+                .account(token.id.asAsset, activeAccount.address)
+                .then((r) => r.unwrapOr(null)?.balance.toBn())) ?? null,
+          });
+        }
+      }
+    } catch (error) {
+      //
+    }
+
+    return result;
+  }, [activeAccount, storedChain, api, fetchAllTokensMetadata]);
+
   const getAllTokensWithNativeAndSupply = useCallback(async (): Promise<TokenWithSupply[] | undefined> => {
     if (!api || !storedChain) return;
 
@@ -530,6 +623,7 @@ export const useAssets = () => {
     getPoolReserves,
     getPoolTokenPairs,
     getAllTokens,
+    getAllTokensWithNativeAndBalances,
     getAllTokensWithNativeAndSupply,
     allTokens,
     nativeBalance,
@@ -537,5 +631,6 @@ export const useAssets = () => {
     pools,
     poolTokenPairs,
     swap,
+    doSendToken,
   };
 };

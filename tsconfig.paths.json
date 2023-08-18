@@ -11,7 +11,8 @@
       "@hooks/*": ["./hooks/*"],
       "@images/*": ["./images/*"],
       "@modals/*": ["./components/Modals/*"],
-      "@pages/*": ["./components/Pages/*"]
+      "@pages/*": ["./components/Pages/*"],
+      "@widgets/*": ["./components/Widgets/*"]
     }
   }
 }

@@ -46,6 +46,8 @@ export enum StatusMessages {
   POOL_SWAP_MAX_AMOUNT_ERROR = 'You can`t swap more than {amount}',
   SWAP_EXECUTING = 'Submitting swap details, please wait',
   SWAP_EXECUTED = 'Swap was successfully executed!',
+  SUBMITTING_TRANSACTION = 'Submitting transaction, please wait',
+  TRANSFER_EXECUTED = 'Transfer was successfully executed!',
 }
 
 export enum MintTypes {

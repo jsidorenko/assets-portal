@@ -1,6 +1,8 @@
 import { ApiPromise } from '@polkadot/api';
+import { decodeAddress, encodeAddress } from '@polkadot/keyring';
 import { AssetId } from '@polkadot/types/interfaces';
 import { BN, BN_ZERO, formatBalance } from '@polkadot/util';
+import { hexToU8a, isHex } from '@polkadot/util';
 import { ToBn } from '@polkadot/util/types';
 import { Decimal } from 'decimal.js';
 
@@ -194,4 +196,14 @@ export const areEqualAddresses = (address1: string, address2: string) => {
   }
 
   return address1.toLowerCase() === address2.toLowerCase();
+};
+
+export const isValidAddress = (address: string) => {
+  try {
+    encodeAddress(isHex(address) ? hexToU8a(address) : decodeAddress(address));
+
+    return true;
+  } catch (error) {
+    return false;
+  }
 };
